@@ -19,6 +19,7 @@ interface IAdapter {
         uint256 amountOut,
         address srcToken,
         address destToken,
+        // address[] memory path,
         address from,
         address to,
         uint256 deadline

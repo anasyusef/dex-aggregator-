@@ -40,12 +40,7 @@ contract UniswapV2Adapter is AdapterStorage {
         swapper.transferFrom(tokenToSell, from, address(this), amountIn);
         assert(tokenToSell.approve(address(router), amountIn));
 
-        uint256 balance = tokenToSell.balanceOf(address(this));
         // console.log("Balance of this contract WETH: %s", balance);
-
-        for (uint256 index = 0; index < path.length; index++) {
-            // console.log("Token address: %s", path[index]);
-        }
 
         amounts = router.swapExactTokensForTokens(
             amountIn,

@@ -7,8 +7,7 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IWETH.sol";
 import "./interfaces/IAdapter.sol";
 import "./interfaces/ISwapper.sol";
-// import "./interfaces/IExecutor.sol";
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -89,6 +88,16 @@ contract Swapper is Ownable, ISwapper {
     //             deadline
     //         );
     // }
+
+    struct SingleSwap {
+        uint adapterId;
+        uint routerId;
+        uint amountIn;
+        uint amountOut;
+        uint deadline;
+        address[] path;
+        address to;
+    }
     function simpleSwapExactInputSingle(
         uint256 adapterId,
         uint256 routerId,
@@ -96,6 +105,7 @@ contract Swapper is Ownable, ISwapper {
         uint256 amountOut,
         address srcToken,
         address destToken,
+        // address[] memory path,
         address to,
         uint256 deadline
     ) external payable returns (uint256) {
@@ -103,9 +113,11 @@ contract Swapper is Ownable, ISwapper {
         IAdapter adapter = IAdapter(adapters[adapterId]);
         address from;
         (srcToken, from) = _wrapETH(amountIn, srcToken);
+        // (path[0], from) = _wrapETH(amountIn, path[0]);
         if (from == address(this)) {
             assert(IERC20(Utils.WETH).approve(address(adapter), amountIn));
         }
+        // console.log(gasleft());
         return
             adapter.swapExactInputSingle(
                 routerId,
@@ -117,8 +129,16 @@ contract Swapper is Ownable, ISwapper {
                 to,
                 deadline
             );
+            // amount = adapter.swapExactInput(
+            //     params.routerId,
+            //     params.amountIn,
+            //     params.amountOut,
+            //     params.path,
+            //     from,
+            //     params.to,
+            //     params.deadline
+            // );
     }
-
 
     /// @notice Wraps ETH to WETH
     /// @dev Given a token the function will return the WETH address as the token output if the toke input is ETH
@@ -223,6 +243,7 @@ contract Swapper is Ownable, ISwapper {
     ) external override {
         token.safeTransferFrom(from, to, amount);
     }
+
     function registerAdapter(uint256 _adapterIdx, address _routerAddress)
         external
         onlyOwner
