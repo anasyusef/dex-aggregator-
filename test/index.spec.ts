@@ -54,12 +54,12 @@ async function fixture() {
   const utils = await Utils.deploy();
   await utils.deployed();
   const Swapper = await ethers.getContractFactory("Swapper");
-  const Executor = await ethers.getContractFactory("Executor");
+  // const Executor = await ethers.getContractFactory("Executor");
   const UniswapV2Adapter = await ethers.getContractFactory("UniswapV2Adapter");
   // const ExampleContract = await ethers.getContractFactory("ExampleContract");
   // exampleContract = await ExampleContract.deploy();
-  const executor = await Executor.deploy();
-  const swap = await Swapper.deploy(executor.address);
+  // const executor = await Executor.deploy();
+  const swap = await Swapper.deploy();
   const uniswapV2Adapter = await UniswapV2Adapter.deploy(swap.address);
   await swap.deployed();
   console.log(`Swap contract deployed at: ${swap.address}`);
@@ -228,7 +228,7 @@ describe("Swap", function () {
     console.log(receipt.gasUsed.toNumber());
     expect(receipt.gasUsed.toNumber()).to.be.lessThanOrEqual(162789);
   });
-  it("should execute simple swaps from WETH to DAI from single swap function", async function () {
+  it.only("should execute simple swaps from WETH to DAI from single swap function", async function () {
     const [owner] = await ethers.getSigners();
     const amountIn = ethers.utils.parseEther("1");
     const slippageTolerance = new Percent("50", "10000");
@@ -242,10 +242,10 @@ describe("Swap", function () {
     const path = [WETH[DAI.chainId].address, addresses.DAI];
     const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
-    WETHContractIWETH.deposit({ value: ethers.utils.parseEther("2") });
+    WETHContractIWETH.deposit({ value: ethers.utils.parseEther("3") });
     await WETHContractIERC20.approve(
       swap.address,
-      ethers.utils.parseEther("2")
+      ethers.utils.parseEther("3")
     );
     const tx = await swap.simpleSwapExactInput(
       0,
@@ -266,10 +266,30 @@ describe("Swap", function () {
       owner.address,
       deadline
     );
+
+    const txMultiDex = await swap.multiSwapExactInput({
+      to: owner.address,
+      amountIn,
+      srcToken: WETH[DAI.chainId].address,
+      destToken: addresses.DAI,
+      swaps: [
+        {
+          adapterId: 0,
+          routerId: 0,
+          deadline,
+          path,
+          amountOut: amountOutMin.toString(),
+          percent: 10000,
+        },
+      ],
+    });
     const receiptMulti = await tx.wait();
+    const receiptMultiDex = await txMultiDex.wait();
     const receiptSingle = await txSingle.wait();
     console.log(
-      `Swap single: Gas ${receiptSingle.gasUsed.toNumber()} | Swap multi: Gas ${receiptMulti.gasUsed.toNumber()}`
+      `\tSwap single: Gas ${receiptSingle.gasUsed.toNumber()}
+        Swap multi: Gas ${receiptMulti.gasUsed.toNumber()}
+        Swap multi dex: Gas ${receiptMultiDex.gasUsed.toNumber()}`
     );
     expect(receiptSingle.gasUsed.toNumber()).to.be.lessThan(
       receiptMulti.gasUsed.toNumber()
@@ -346,24 +366,24 @@ describe("Swap", function () {
       routerId,
       deadline,
     };
-    const percentsSplit = [40, 30, 30];
+    const percentsSplit = [4000, 3000, 3000];
 
     const WETH_USDC_trade = await createUniswapTrade({
       path: WETH_USDC_path,
-      amount: amountInEthers.div(100).mul(percentsSplit[0]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[0]).toString(),
       tradeType: TradeType.EXACT_INPUT,
       provider,
     });
 
     const WETH_USDT_USDC_trade = await createUniswapTrade({
-      amount: amountInEthers.div(100).mul(percentsSplit[1]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[1]).toString(),
       path: WETH_USDT_USDC_path,
       tradeType: TradeType.EXACT_INPUT,
       provider,
     });
 
     const WETH_DAI_USDC_trade = await createUniswapTrade({
-      amount: amountInEthers.div(100).mul(percentsSplit[2]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[2]).toString(),
       path: WETH_DAI_USDC_path,
       tradeType: TradeType.EXACT_INPUT,
       provider,
@@ -441,7 +461,7 @@ describe("Swap", function () {
       deadline,
     };
 
-    const percentsSplit = [60, 40];
+    const percentsSplit = [6000, 4000];
 
     /* eslint-disable camelcase */
     const WETH_USDC_DAI_WETH_path = [
@@ -459,13 +479,13 @@ describe("Swap", function () {
 
     const WETH_USDC_DAI_WETH_trade = await createUniswapTrade({
       path: WETH_USDC_DAI_WETH_path,
-      amount: amountInEthers.div(100).mul(percentsSplit[0]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[0]).toString(),
       tradeType: TradeType.EXACT_INPUT,
       provider,
     });
 
     const WETH_USDT_DAI_WETH_trade = await createUniswapTrade({
-      amount: amountInEthers.div(100).mul(percentsSplit[1]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[1]).toString(),
       path: WETH_USDT_DAI_WETH_path,
       tradeType: TradeType.EXACT_INPUT,
       provider,
@@ -521,7 +541,7 @@ describe("Swap", function () {
 
     const [owner] = await ethers.getSigners();
 
-    const percentsSplit = [60, 40];
+    const percentsSplit = [6000, 4000];
 
     await WETHContractIWETH.deposit({ value: amountInEthers });
     const WETHBalance = await WETHContractIERC20.balanceOf(owner.address);
@@ -544,13 +564,13 @@ describe("Swap", function () {
 
     const WETH_USDC_DAI_WETH_trade = await createUniswapTrade({
       path: WETH_USDC_DAI_WETH_path,
-      amount: amountInEthers.div(100).mul(percentsSplit[0]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[0]).toString(),
       tradeType: TradeType.EXACT_INPUT,
       provider,
     });
 
     const WETH_USDT_DAI_WETH_trade = await createUniswapTrade({
-      amount: amountInEthers.div(100).mul(percentsSplit[1]).toString(),
+      amount: amountInEthers.div(10000).mul(percentsSplit[1]).toString(),
       path: WETH_USDT_DAI_WETH_path,
       tradeType: TradeType.EXACT_INPUT,
       provider,
@@ -596,7 +616,7 @@ describe("Swap", function () {
     expect(swapBalance.toString()).to.equal("0");
   });
   it("should perform multi swaps where the source token is ERC20", async () => {});
-  it("should not perform multi swaps where ETH is in the middle path", async () => {});
+  // it("should not perform multi swaps where ETH is in the middle path", async () => {});
   it("should perform multi swaps on multiple dexes", async () => {});
 });
 // type OptimalSwap = {
