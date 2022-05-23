@@ -19,17 +19,6 @@ import tokens from "./utils/tokens";
 const provider = waffle.provider;
 const createFixtureLoader = waffle.createFixtureLoader;
 
-// interface Path {
-//   address: string;
-//   decimals: number;
-// }
-
-// interface CreateTrade {
-//   amountIn: BigNumber;
-//   slippageTolerance?: Percent;
-//   path: Path[];
-// }
-
 const addresses = {
   DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
   USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -111,16 +100,9 @@ describe("Swap", function () {
   const USDC = new Token(chainId, addresses.USDC, 6);
   let uniswapV2Adapter: UniswapV2Adapter;
   let utils: Utils;
-  // const USDT = new Token(chainId, addresses.USDT, 6);
   let wallet: Wallet;
   let other: Wallet;
   let loadFixture: ReturnType<typeof createFixtureLoader>;
-  // const IERC20Interface = new ethers.utils.Interface([
-  //   "function transfer(address recipient, uint256 amount) external returns (bool)",
-  //   "function transferFrom(address sender,address recipient,uint256 amount) external returns (bool)",
-  //   "function balanceOf(address account) external view returns (uint256)",
-  //   "function allowance(address owner, address spender) external view returns (uint256)",
-  // ]);
   before("create fixture loader", async () => {
     [wallet, other] = (await ethers.getSigners()) as any;
     loadFixture = createFixtureLoader([wallet, other]);
@@ -219,37 +201,37 @@ describe("Swap", function () {
       ],
     });
   });
-  it("should execute simple swaps from uniswap", async function () {
-    const [owner] = await ethers.getSigners();
-    const amountIn = ethers.utils.parseEther("1");
-    const slippageTolerance = new Percent("50", "10000");
-    const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
-    const uniswapV2Router = await ethers.getContractAt(
-      "IUniswapV2Router02",
-      addresses.UniswapV2Router
-    );
-    const route = new Route([pair], WETH[DAI.chainId]);
-    const trade = new Trade(
-      route,
-      new TokenAmount(WETH[DAI.chainId], amountIn.toString()),
-      TradeType.EXACT_INPUT
-    );
-    const path = [WETH[DAI.chainId].address, addresses.DAI];
-    const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
-    WETHContractIWETH.deposit({ value: ethers.utils.parseEther("1") });
-    await WETHContractIERC20.approve(addresses.UniswapV2Router, amountIn);
-    const tx = await uniswapV2Router.swapExactTokensForTokens(
-      amountIn,
-      amountOutMin.toString(),
-      path,
-      owner.address,
-      deadline
-    );
-    const receipt = await tx.wait();
-    console.log(receipt.gasUsed.toNumber());
-    expect(receipt.gasUsed.toNumber()).to.be.lessThanOrEqual(162789);
-  });
+  // it.skip("should execute simple swaps from uniswap", async function () {
+  //   const [owner] = await ethers.getSigners();
+  //   const amountIn = ethers.utils.parseEther("1");
+  //   const slippageTolerance = new Percent("50", "10000");
+  //   const pair = await Fetcher.fetchPairData(DAI, WETH[DAI.chainId]);
+  //   const uniswapV2Router = await ethers.getContractAt(
+  //     "IUniswapV2Router02",
+  //     addresses.UniswapV2Router
+  //   );
+  //   const route = new Route([pair], WETH[DAI.chainId]);
+  //   const trade = new Trade(
+  //     route,
+  //     new TokenAmount(WETH[DAI.chainId], amountIn.toString()),
+  //     TradeType.EXACT_INPUT
+  //   );
+  //   const path = [WETH[DAI.chainId].address, addresses.DAI];
+  //   const amountOutMin = trade.minimumAmountOut(slippageTolerance).raw; // needs to be converted to e.g. hex
+  //   const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+  //   WETHContractIWETH.deposit({ value: ethers.utils.parseEther("1") });
+  //   await WETHContractIERC20.approve(addresses.UniswapV2Router, amountIn);
+  //   const tx = await uniswapV2Router.swapExactTokensForTokens(
+  //     amountIn,
+  //     amountOutMin.toString(),
+  //     path,
+  //     owner.address,
+  //     deadline
+  //   );
+  //   const receipt = await tx.wait();
+  //   console.log(receipt.gasUsed.toNumber());
+  //   expect(receipt.gasUsed.toNumber()).to.be.lessThanOrEqual(162789);
+  // });
   it("should execute simple swaps from WETH to DAI from single swap function", async function () {
     const [owner] = await ethers.getSigners();
     const amountIn = ethers.utils.parseEther("1");
@@ -299,10 +281,10 @@ describe("Swap", function () {
     // const receiptMulti = await tx.wait();
     const receiptMultiDex = await txMultiDex.wait();
     const receiptSingle = await txSingle.wait();
-    console.log(
-      `\tSwap single: Gas ${receiptSingle.gasUsed.toNumber()}
-        Swap multi dex: Gas ${receiptMultiDex.gasUsed.toNumber()}`
-    );
+    // console.log(
+    //   `\tSwap single: Gas ${receiptSingle.gasUsed.toNumber()}
+    //     Swap multi dex: Gas ${receiptMultiDex.gasUsed.toNumber()}`
+    // );
     expect(receiptSingle.gasUsed.toNumber()).to.be.lessThan(
       receiptMultiDex.gasUsed.toNumber()
     );
@@ -365,9 +347,9 @@ describe("Swap", function () {
     );
     const receiptMulti = await tx.wait();
     const receiptSingle = await txSingle.wait();
-    console.log(
-      `Swap single: Gas ${receiptSingle.gasUsed.toNumber()} | Swap multi: Gas ${receiptMulti.gasUsed.toNumber()}`
-    );
+    // console.log(
+    //   `Swap single: Gas ${receiptSingle.gasUsed.toNumber()} | Swap multi: Gas ${receiptMulti.gasUsed.toNumber()}`
+    // );
     expect(receiptSingle.gasUsed.toNumber()).to.be.lessThan(
       receiptMulti.gasUsed.toNumber()
     );
@@ -637,35 +619,179 @@ describe("Swap", function () {
     /* eslint-enable camelcase */
     const swapBalance = await provider.getBalance(swap.address);
     const newOwnerBalance = await owner.getBalance();
-    // const formattedFinalBalance = ethers.utils.formatEther(newOwnerBalance);
-    // const formattedTotalMinimumOut = ethers.utils.formatEther(
-    //   totalMinimumOut.raw.toString()
-    // );
+    const formattedFinalBalance = ethers.utils.formatEther(newOwnerBalance);
+    const formattedTotalMinimumOut = ethers.utils.formatEther(
+      totalMinimumOut.raw.toString()
+    );
 
-    // expect(+formattedFinalBalance).to.be.greaterThanOrEqual(
-    //   +formattedTotalMinimumOut
-    // );
+    expect(+formattedFinalBalance).to.be.greaterThanOrEqual(
+      +formattedTotalMinimumOut
+    );
 
     expect(swapBalance.toString()).to.equal("0");
   });
-  it("should perform multi swaps where the source token is ERC20", async () => {});
+  it("should revert given a wrong router to the adapter and using a direct swap", async () => {
+    const amountInEthers = ethers.utils.parseEther("10");
+    const slippageTolerance = new Percent("50", "10000");
+    const getMinimumAmountOut = (trade: Trade) => {
+      return trade.minimumAmountOut(slippageTolerance).raw.toString();
+    };
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    const [owner] = await ethers.getSigners();
+    const WETH_DAI_trade = await createUniswapTrade({
+      amount: amountInEthers.div(10000).mul(1000).toString(),
+      path: [tokens.WETH, tokens.DAI],
+      tradeType: TradeType.EXACT_INPUT,
+      provider,
+    });
+    await expect(
+      swap.simpleSwapExactInputSingle(
+        0,
+        99,
+        amountInEthers,
+        getMinimumAmountOut(WETH_DAI_trade).toString(),
+        addresses.WETH,
+        addresses.DAI,
+        owner.address,
+        deadline
+      )
+    ).to.be.revertedWith("Router not registered");
+  });
   // it("should not perform multi swaps where ETH is in the middle path", async () => {});
-  it("should perform multi swaps on multiple dexes", async () => {});
+  it("should revert given a wrong router to the adapter and using multi swap", async () => {
+    const amountInEthers = ethers.utils.parseEther("10");
+    const slippageTolerance = new Percent("50", "10000");
+    const getMinimumAmountOut = (trade: Trade) => {
+      return trade.minimumAmountOut(slippageTolerance).raw.toString();
+    };
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    const [owner] = await ethers.getSigners();
+    const WETH_DAI_trade = await createUniswapTrade({
+      amount: amountInEthers.div(10000).mul(1000).toString(),
+      path: [tokens.WETH, tokens.DAI],
+      tradeType: TradeType.EXACT_INPUT,
+      provider,
+    });
+    await expect(
+      swap.multiSwapExactInput({
+        to: owner.address,
+        amountIn: amountInEthers,
+        srcToken: addresses.WETH,
+        destToken: addresses.DAI,
+        swaps: [
+          {
+            adapterId: 0,
+            routerId: 99,
+            deadline,
+            amountOut: getMinimumAmountOut(WETH_DAI_trade).toString(),
+            path: [addresses.WETH, addresses.DAI],
+            percent: 10000,
+          },
+        ],
+      })
+    ).to.be.revertedWith("Router not registered");
+  });
+
+  it("should revert when the destination doesn't match on multi swap", async () => {
+    const amountInEthers = ethers.utils.parseEther("10");
+    const slippageTolerance = new Percent("50", "10000");
+    const getMinimumAmountOut = (trade: Trade) => {
+      return trade.minimumAmountOut(slippageTolerance).raw.toString();
+    };
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    const [owner] = await ethers.getSigners();
+    const WETH_DAI_trade = await createUniswapTrade({
+      amount: amountInEthers.div(10000).mul(1000).toString(),
+      path: [tokens.WETH, tokens.DAI],
+      tradeType: TradeType.EXACT_INPUT,
+      provider,
+    });
+    await expect(
+      swap.multiSwapExactInput({
+        to: owner.address,
+        amountIn: amountInEthers,
+        srcToken: addresses.WETH,
+        destToken: addresses.DAI,
+        swaps: [
+          {
+            adapterId: 0,
+            routerId: 0,
+            deadline,
+            amountOut: getMinimumAmountOut(WETH_DAI_trade).toString(),
+            path: [addresses.WETH, addresses.USDC],
+            percent: 10000,
+          },
+        ],
+      })
+    ).to.be.revertedWith("destToken doesn't match");
+  });
+  it("should revert if the source token is not ETH and some ETH was sent along with the transaction", async () => {
+    const amountInEthers = ethers.utils.parseEther("10");
+    const slippageTolerance = new Percent("50", "10000");
+    const getMinimumAmountOut = (trade: Trade) => {
+      return trade.minimumAmountOut(slippageTolerance).raw.toString();
+    };
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    const [owner] = await ethers.getSigners();
+    const WETH_DAI_trade = await createUniswapTrade({
+      amount: amountInEthers.div(10000).mul(1000).toString(),
+      path: [tokens.WETH, tokens.DAI],
+      tradeType: TradeType.EXACT_INPUT,
+      provider,
+    });
+    await expect(
+      swap.multiSwapExactInput(
+        {
+          to: owner.address,
+          amountIn: amountInEthers,
+          srcToken: addresses.WETH,
+          destToken: addresses.DAI,
+          swaps: [
+            {
+              adapterId: 0,
+              routerId: 0,
+              deadline,
+              amountOut: getMinimumAmountOut(WETH_DAI_trade).toString(),
+              path: [addresses.WETH, addresses.USDC],
+              percent: 10000,
+            },
+          ],
+        },
+        { value: amountInEthers }
+      )
+    ).to.be.revertedWith("destToken doesn't match");
+  });
+  it("should revert if ETH is the token input and no value is sent", async () => {
+    const amountInEthers = ethers.utils.parseEther("10");
+    const slippageTolerance = new Percent("50", "10000");
+    const getMinimumAmountOut = (trade: Trade) => {
+      return trade.minimumAmountOut(slippageTolerance).raw.toString();
+    };
+    const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from the current Unix time
+    const [owner] = await ethers.getSigners();
+    const WETH_DAI_trade = await createUniswapTrade({
+      amount: amountInEthers.div(10000).mul(1000).toString(),
+      path: [tokens.WETH, tokens.DAI],
+      tradeType: TradeType.EXACT_INPUT,
+      provider,
+    });
+    await expect(
+      swap.multiSwapExactInput({
+        to: owner.address,
+        amountIn: amountInEthers,
+        srcToken: addresses.ETH,
+        destToken: addresses.DAI,
+        swaps: [
+          {
+            adapterId: 0,
+            routerId: 0,
+            deadline,
+            amountOut: getMinimumAmountOut(WETH_DAI_trade).toString(),
+            path: [addresses.WETH, addresses.USDC],
+            percent: 10000,
+          },
+        ],
+      })
+    ).to.be.revertedWith("Value must be non-zero");
+  });
 });
-// type OptimalSwap = {
-
-// }
-
-// type RouteT = {
-//   percent: number // Might change to complete number instead of percent
-//   swap: OptimalSwap
-// }
-
-// type Struct = {
-//   srcToken: string,
-//   srcAmount: number,
-//   destToken: string,
-//   destAmount: number,
-//   side: "BUY" | "SELL"
-//   route: RouteT[]
-// }

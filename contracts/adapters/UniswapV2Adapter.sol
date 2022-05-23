@@ -20,6 +20,9 @@ contract UniswapV2Adapter is AdapterStorage {
         swapper = ISwapper(swapContract);
     }
 
+    /// @notice Swaps multiple tokens
+    /// @dev Swaps tokens that have a path greater or equal to two
+    /// @return amounts The amounts returned for each token.
     function swapExactInput(
         uint256 routerId,
         uint256 amountIn,
@@ -55,6 +58,9 @@ contract UniswapV2Adapter is AdapterStorage {
     //     // TODO
     // }
 
+    /// @notice Swaps tokens that have a direct path.
+    /// @dev Swaps tokens where the path includes only two tokens.
+    /// @return amountSwapped The amount swapped
     function swapExactInputSingle(
         uint256 routerId,
         uint256 amountIn,

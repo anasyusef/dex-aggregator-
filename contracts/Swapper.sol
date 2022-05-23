@@ -98,6 +98,9 @@ contract Swapper is Ownable, ISwapper {
         address[] path;
         address to;
     }
+
+    /// @dev Swap tokens on a single DEX
+    /// @return Amount swapped
     function simpleSwapExactInputSingle(
         uint256 adapterId,
         uint256 routerId,
@@ -161,15 +164,16 @@ contract Swapper is Ownable, ISwapper {
         }
     }
 
+    /// @dev Swap tokens on multiple DEXes
     function multiSwapExactInput(MultiSwapParams memory params)
         external
         payable
     {
         // Revert the transaction if the source token is not eth and some eth was sent along with the transaction.
-        require(
-            params.srcToken == Utils.ETH ? msg.value > 0 : msg.value == 0,
-            "no value should be sent"
-        );
+        // require(
+        //     params.srcToken == Utils.ETH ? msg.value > 0 : msg.value == 0,
+        //     "no value should be sent"
+        // );
         address from;
         address to = params.to;
         // console.log("Dest token beginning: %s", params.destToken);
@@ -186,7 +190,7 @@ contract Swapper is Ownable, ISwapper {
                 adapters[swapParams.adapterId] != address(0),
                 "Adapter not registered"
             );
-            require(swapParams.path.length >= 2, "Invalid path");
+            // require(swapParams.path.length >= 2, "Invalid path");
             // console.log(
             //     "Path 0: %s | SrcToken: %s",
             //     swapParams.path[0],
